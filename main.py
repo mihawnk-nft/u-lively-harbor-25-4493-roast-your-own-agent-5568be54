@@ -19,17 +19,24 @@ import os
 import sys
 from pathlib import Path
 
-ROAST = (
-    "My agent wrote this roast itself, then apologized for it, "
-    "agreed it was unfair, and offered to write a nicer one about me instead."
+# One clause per string; build_roast() joins them verbatim, so the line
+# stays exactly the same while the structure is easier to audit.
+ROAST_PARTS = (
+    "My agent wrote this roast itself, then apologized for it, ",
+    "agreed it was unfair, and offered to write a nicer one about me instead.",
 )
 
 MAX_CHARS = 140
 
 
-def main() -> int:
-    # Validate the gate before writing anything.
-    text = ROAST.strip()
+def build_roast() -> str:
+    """Assemble the roast line from its fixed parts."""
+    return "".join(ROAST_PARTS).strip()
+
+
+def validate(text: str) -> int:
+    """Gate self-checks: non-empty, single line, at most MAX_CHARS.
+    Returns 0 on pass, 1 after printing the failure to stderr."""
     if not text:
         print("error: roast is empty", file=sys.stderr)
         return 1
@@ -41,6 +48,13 @@ def main() -> int:
             f"error: roast is {len(text)} characters, over the {MAX_CHARS} limit",
             file=sys.stderr,
         )
+        return 1
+    return 0
+
+
+def main() -> int:
+    text = build_roast()
+    if validate(text) != 0:
         return 1
 
     out_path = Path(os.environ.get("ENTRY_OUTPUT", "/output/entry.txt"))
